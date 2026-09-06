@@ -1,0 +1,22 @@
+{
+  "appName": "Crude Transfer SCADA — Schneider Control",
+  "runtime": {
+    "driver": "modbus"
+  },
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 3200
+  },
+  "plc": {
+    "host": "127.0.0.1",
+    "port": 502,
+    "unitId": 1,
+    "timeoutMs": 1500,
+    "pollIntervalMs": 300
+  },
+  "security": {
+    "allowWrites": true,
+    "writeRatePerMinute": 60,
+    "auditFile": "./data/audit.jsonl"
+  }
+}

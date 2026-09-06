@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SCADA web lokal crude transfer dan quality routing untuk Schneider Modicon M221">
+  <title>Crude Transfer SCADA</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="identity">
+      <span class="plant-mark">CT</span>
+      <div><b>CRUDE TRANSFER &amp; QUALITY ROUTING</b><small>SDV-101 · P-101 · AIT-101 · THREE-WAY MANIFOLD</small></div>
+    </div>
+    <div class="top-status">
+      <span id="sourceBadge" class="badge">M221 MODBUS TCP</span>
+      <span id="modeBadge" class="badge">MODE —</span>
+      <span id="connectionBadge" class="badge offline"><i></i> PLC OFFLINE</span>
+      <time id="clock">--:--:--</time>
+    </div>
+  </header>
+
+  <div id="alarmRibbon" class="alarm-ribbon" hidden>
+    <b id="alarmRibbonCode">ALARM</b><span id="alarmRibbonText">—</span><small id="alarmRibbonCount">0 ACTIVE</small>
+  </div>
+
+  <main>
+    <section class="kpi-grid" aria-label="Ringkasan operasi">
+      <article class="primary-kpi"><span>TRANSFER STATE</span><strong id="processState">NO DATA</strong><small id="processDetail">Menunggu sumber data</small></article>
+      <article><span>ACTIVE ROUTE</span><strong id="routeValue">—</strong><small id="routePhase">SEQUENCE IDLE</small></article>
+      <article><span>FLOW RATE</span><strong><b id="flowValue">—</b> <em>m³/h</em></strong><small>FT-101 · process value</small></article>
+      <article><span>DISCHARGE</span><strong><b id="pressureValue">—</b> <em>bar</em></strong><small>PT-102 · pump outlet</small></article>
+      <article><span>BS&amp;W</span><strong><b id="bswValue">—</b> <em>%</em></strong><small>AIT-101 · quality</small></article>
+      <article><span>COMM LATENCY</span><strong><b id="latencyValue">—</b> <em>ms</em></strong><small id="endpointValue">127.0.0.1:502 · U1</small></article>
+    </section>
+
+    <section class="workspace">
+      <div class="process-panel panel">
+        <div class="panel-head">
+          <div><span>PROCESS OVERVIEW</span><b>INLET → TRANSFER → ANALYSIS → ROUTING</b></div>
+          <small id="lastUpdate">NO UPDATE</small>
+        </div>
+
+        <div id="processMap" class="process-map">
+          <div class="mainline">
+            <article class="process-node source-node">
+              <div class="node-tag"><span>TK-101</span><i class="health-dot healthy"></i></div>
+              <div class="tank source-tank"><span></span></div>
+              <b>CRUDE BUFFER</b><small>UPSTREAM FEED</small>
+            </article>
+
+            <div class="pipe-segment" data-pipe="feed"><i></i></div>
+
+            <article class="process-node" data-unit="sdv">
+              <div class="node-tag"><span>SDV-101</span><i class="health-dot"></i></div>
+              <div class="valve-symbol"><i></i><i></i><span></span></div>
+              <b>INLET SDV</b><small>FAIL-CLOSE</small>
+              <div class="signal-row"><span data-signal="command">CMD</span><span data-signal="running">OPEN</span><span data-signal="healthy">OK</span></div>
+            </article>
+
+            <div class="pipe-segment" data-pipe="transfer"><i></i></div>
+
+            <article class="process-node" data-unit="pump">
+              <div class="node-tag"><span>P-101</span><i class="health-dot"></i></div>
+              <div class="pump-symbol"><span></span></div>
+              <b>TRANSFER PUMP</b><small>CENTRIFUGAL · DUTY</small>
+              <div class="signal-row"><span data-signal="command">CMD</span><span data-signal="running">RUN</span><span data-signal="healthy">FB</span></div>
+            </article>
+
+            <div class="pipe-segment measured" data-pipe="discharge"><i></i><span><b id="pipeSuction">—</b> bar suction</span></div>
+
+            <article class="process-node" data-unit="analyzer">
+              <div class="node-tag"><span>AIT-101</span><i class="health-dot"></i></div>
+              <div class="analyzer-symbol"><span>BS&amp;W</span><i></i></div>
+              <b>QUALITY ANALYSER</b><small>ROUTE CLASSIFICATION</small>
+              <div class="signal-row"><span data-signal="command">BUSY</span><span data-signal="running">SCAN</span><span data-signal="healthy">OK</span></div>
+            </article>
+
+            <div class="pipe-segment manifold-pipe" data-pipe="manifold"><i></i></div>
+
+            <article class="process-node manifold-node">
+              <div class="node-tag"><span>MH-201</span><i class="health-dot healthy"></i></div>
+              <div class="manifold-symbol"><span></span><i></i><i></i><i></i></div>
+              <b>ROUTE MANIFOLD</b><small>ONE-OF-THREE SELECT</small>
+            </article>
+          </div>
+
+          <div class="route-bank">
+            <article class="route-card" data-route="SALES" data-unit="sales">
+              <div class="route-line"><i></i><span class="mini-valve"></span></div>
+              <div class="route-copy"><span>XV-201A</span><b>SALES TANK</b><small>ON-SPEC PRODUCT</small><div class="route-signals"><i data-signal="command">SEL</i><i data-signal="running">OPEN</i><i data-signal="healthy">OK</i></div></div>
+              <div class="tank compact"><span id="salesFill"></span><b id="salesLevel">—</b><small>%</small></div>
+            </article>
+            <article class="route-card" data-route="REPROCESS" data-unit="reprocess">
+              <div class="route-line"><i></i><span class="mini-valve"></span></div>
+              <div class="route-copy"><span>XV-201B</span><b>REPROCESS</b><small>OFF-SPEC RECOVERY</small><div class="route-signals"><i data-signal="command">SEL</i><i data-signal="running">OPEN</i><i data-signal="healthy">OK</i></div></div>
+              <div class="tank compact"><span id="reprocessFill"></span><b id="reprocessLevel">—</b><small>%</small></div>
+            </article>
+            <article class="route-card" data-route="SLOP" data-unit="slop">
+              <div class="route-line"><i></i><span class="mini-valve"></span></div>
+              <div class="route-copy"><span>XV-201C</span><b>SLOP TANK</b><small>SAFE DIVERSION</small><div class="route-signals"><i data-signal="command">SEL</i><i data-signal="running">OPEN</i><i data-signal="healthy">OK</i></div></div>
+              <div class="tank compact"><span id="slopFill"></span><b id="slopLevel">—</b><small>%</small></div>
+            </article>
+          </div>
+        </div>
+
+        <div class="batch-strip">
+          <div><span>SALES BATCHES</span><b id="salesCount">—</b><small>%C0 / integration point</small></div>
+          <div><span>REPROCESS BATCHES</span><b id="reprocessCount">—</b><small>%C1 / integration point</small></div>
+          <div><span>SLOP BATCHES</span><b id="slopCount">—</b><small>%C2 / integration point</small></div>
+          <div><span>TRANSFER DEMAND</span><b id="demandValue">—</b><small>MANUAL / AUTO</small></div>
+        </div>
+      </div>
+
+      <aside class="control-panel panel">
+        <div class="panel-head">
+          <div><span>OPERATOR CONTROL</span><b>AUTHORIZED %M COMMANDS</b></div>
+          <button id="sessionButton" class="text-button">CONTROL SESSION</button>
+        </div>
+        <div id="controlLock" class="control-lock">MONITOR ONLY</div>
+
+        <div class="mode-controls">
+          <button class="selector" data-toggle="autoMode"><span><b>AUTO MODE</b><small>%M0</small></span><i></i></button>
+          <button class="selector" data-toggle="autoEnable"><span><b>AUTO ENABLE</b><small>%M3</small></span><i></i></button>
+        </div>
+
+        <div class="command-grid">
+          <button class="command start" data-pulse="start"><i></i><span>START</span><small>TRANSFER · %M1</small></button>
+          <button class="command stop" data-hold="stop"><i></i><span>STOP</span><small>HOLD · %M2</small></button>
+          <button class="command reset" data-pulse="resetCounters"><i></i><span>RESET</span><small>COUNTERS · %M40</small></button>
+        </div>
+
+        <div class="esd-panel">
+          <div><span>ESD STATUS</span><b id="esdValue">NO DATA</b></div>
+          <p>ESD tidak dapat di-reset dari web. Reset harus dilakukan di panel lokal setelah area dinyatakan aman.</p>
+        </div>
+
+        <dl class="control-meta">
+          <div><dt>SERVER PROFILE</dt><dd id="profileValue">—</dd></div>
+          <div><dt>WRITE ACCESS</dt><dd id="writeValue">DISABLED</dd></div>
+          <div><dt>PLC IMAGE</dt><dd>%M0…%M40</dd></div>
+          <div><dt>AUDIT</dt><dd>JSONL ENABLED</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="lower-grid">
+      <div class="trend-panel panel">
+        <div class="panel-head"><div><span>LIVE TREND</span><b>FLOW &amp; DISCHARGE PRESSURE · 120 SAMPLES</b></div><div class="legend"><i class="flow"></i> FLOW <i class="pressure"></i> PRESSURE</div></div>
+        <canvas id="trend" width="900" height="250"></canvas>
+      </div>
+
+      <div class="alarm-panel panel">
+        <div class="panel-head"><div><span>ACTIVE EVENTS</span><b>TRIP &amp; WARNING SUMMARY</b></div><small id="alarmStamp">—</small></div>
+        <div id="alarms" class="alarms"><p>Menunggu sumber data.</p></div>
+      </div>
+
+      <div class="permit-panel panel">
+        <div class="panel-head"><div><span>PERMISSIVE MATRIX</span><b>PLC INTERNAL STATUS</b></div><small>LIVE</small></div>
+        <div id="permissives" class="permit-list"></div>
+      </div>
+    </section>
+
+    <section class="tag-panel panel">
+      <div class="panel-head"><div><span>MODBUS DATA MAP</span><b>M221 INTERNAL MEMORY · ZERO-BASED COILS</b></div><button id="toggleTags" class="text-button">SHOW TAGS</button></div>
+      <div id="tagTable" class="tag-table" hidden></div>
+    </section>
+  </main>
+
+  <dialog id="authDialog">
+    <form method="dialog">
+      <span class="dialog-kicker">CONTROL AUTHORIZATION</span>
+      <h2>Open operator session</h2>
+      <p>Masukkan token yang tercetak di terminal launcher. Token hanya disimpan di memori tab browser ini.</p>
+      <label for="tokenInput">Session token</label>
+      <input id="tokenInput" type="password" autocomplete="off" minlength="20">
+      <div><button value="cancel">CANCEL</button><button id="saveToken" value="save" class="primary">OPEN SESSION</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/runtime-config.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>

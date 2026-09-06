@@ -1,0 +1,22 @@
+{
+  "appName": "Crude Transfer SCADA — Demonstration",
+  "runtime": {
+    "driver": "demo"
+  },
+  "listen": {
+    "host": "127.0.0.1",
+    "port": 3210
+  },
+  "plc": {
+    "host": "demo-engine",
+    "port": 502,
+    "unitId": 1,
+    "timeoutMs": 500,
+    "pollIntervalMs": 500
+  },
+  "security": {
+    "allowWrites": true,
+    "writeRatePerMinute": 120,
+    "auditFile": "./data/demo-audit.jsonl"
+  }
+}

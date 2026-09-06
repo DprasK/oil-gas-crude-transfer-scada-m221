@@ -1,0 +1,17 @@
+{
+  "name": "oil-gas-crude-transfer-m221-scada",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local web SCADA for a Schneider M221 crude-oil transfer and three-way routing skid",
+  "scripts": {
+    "start": "node src/server.js",
+    "control": "node src/start-control.js",
+    "demo": "node src/start-demo.js",
+    "check": "node --check src/server.js && node --check src/config.js && node --check src/modbus-client.js && node --check src/plc.js && node --check src/demo-plc.js && node --check src/tag-model.js && node --check src/start-control.js && node --check src/start-demo.js && node --check public/runtime-config.js && node --check public/app.js && node --check hosted/runtime-config.js && node --check hosted/app.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
