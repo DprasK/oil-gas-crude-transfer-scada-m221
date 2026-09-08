@@ -1,6 +1,6 @@
 # Crude Transfer Web SCADA — Schneider Modicon M221
 
-SCADA web lokal untuk proyek `OIL_GAS_CRUDE_TRANSFER_COMPLEX_TM221CE24R_OPENABLE.smbp`. Dashboard memantau transfer crude, permissive/ESD, analyser sequence, tiga jalur routing, alarm, tren, dan daftar alamat Modbus.
+SCADA web lokal untuk proyek Schneider M221 [`PLC/OIL_GAS_CRUDE_TRANSFER_COMPLEX_TM221CE24R_OPENABLE.smbp`](PLC/OIL_GAS_CRUDE_TRANSFER_COMPLEX_TM221CE24R_OPENABLE.smbp). Dashboard memantau transfer crude, permissive/ESD, analyser sequence, tiga jalur routing, alarm, tren, dan daftar alamat Modbus.
 
 ## Cara paling cepat — mode DEMO
 
